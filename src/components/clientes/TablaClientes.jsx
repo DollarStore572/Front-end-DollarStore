@@ -6,8 +6,8 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { Button } from "react-bootstrap";
 
 // Declaración del componente TablaClientes que recibe props
-const TablaClientes = ({ 
-  clientes, 
+const TablaClientes = ({
+  clientes,
   cargando,
   error,
   totalElementos,
@@ -15,7 +15,8 @@ const TablaClientes = ({
   paginaActual,
   establecerPaginaActual,
   abrirModalEliminacion,
-  abrirModalEdicion
+  abrirModalEdicion,
+  generarPDFDetalleCliente // Nueva prop para generar PDF de detalle
 }) => {
   // Renderizado condicional según el estado recibido por props
   if (cargando) {
@@ -55,6 +56,15 @@ const TablaClientes = ({
                   onClick={() => abrirModalEdicion(cliente)}
                 >
                   <i className="bi bi-pencil"></i>
+                </Button>
+                {/* Botón para generar PDF de detalle por cliente */}
+                <Button
+                  variant="outline-info" // Color distinto para el botón de PDF de detalle
+                  size="sm"
+                  className="me-2"
+                  onClick={() => generarPDFDetalleCliente(cliente)}
+                >
+                  <i className="bi bi-filetype-pdf"></i> {/* Icono de PDF */}
                 </Button>
                 <Button
                   variant="outline-danger"
