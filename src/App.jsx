@@ -12,6 +12,7 @@ import Categorias from "./views/Categorias";
 import Proveedores from "./views/Proveedores";
 import Marcas from "./views/Marcas";
 import Compras from "./views/Compras";
+import Estadisticas from "./views/Estadisticas";
 
 
 const App = () => {
@@ -30,6 +31,7 @@ const App = () => {
           <Route path="/proveedores" element={<Proveedores />} />
           <Route path="/marcas" element={<Marcas />} />
           <Route path="/compras" element={<Compras />} />
+          <Route path="/estadisticas" element={<Estadisticas />} />
       </Routes>
       </main>
     </Router>

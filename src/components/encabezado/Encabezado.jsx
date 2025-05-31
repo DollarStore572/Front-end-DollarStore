@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Container, Nav, Navbar, Offcanvas } from "react-bootstrap";
+import { Container, Nav, Navbar,NavDropdown, Offcanvas } from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import "../../App.css";
@@ -96,28 +96,50 @@ const Encabezado = () => {
                 <strong>Clientes</strong>
               </Nav.Link>
 
-              <Nav.Link
-                onClick={() => navegarA("/categorias")}
-                className={estaColapsado ? "text-black" : "text-white"}
-              >
-                {estaColapsado ? <i className="bi bi-tags-fill me-2"></i> : null}
-                <strong>Categorías</strong>
-              </Nav.Link>
+
+            <NavDropdown 
+  title={
+    <span>
+      {estaColapsado && <i className="bi-bag-heart-fill me-2"></i>}
+      Productos
+    </span>
+  }
+  id="basic-nav-dropdown"  
+  className={estaColapsado ? "titulo-negro" : "titulo-blanco"}
+>
+  <NavDropdown.Item
+    onClick={() => navegarA("/productos")}
+    className="text-black"
+  >
+    {estaColapsado ? <i className="bi-box2-heart-fill me-2"></i> : null}
+    <strong>Gestión Produtos</strong>
+  </NavDropdown.Item>
+
+  <NavDropdown.Item
+    className="text-black"
+    onClick={() => navegarA("/categorias")}
+  >
+    {estaColapsado ? <i className="bi-bookmarks-fill me-2"></i> : null}
+    <strong>Gestión Categorias</strong>
+  </NavDropdown.Item>
+
+  <NavDropdown.Item
+    onClick={() => navegarA("/marcas")}
+    className="text-black"
+  >
+    {estaColapsado ? <i className="bi-images me-2"></i> : null}
+    <strong>Gestión Marcas</strong>
+  </NavDropdown.Item>
+
+</NavDropdown>
+
 
               <Nav.Link
-                onClick={() => navegarA("/marcas")}
+                onClick={() => navegarA("/estadisticas")}
                 className={estaColapsado ? "text-black" : "text-white"}
               >
-                {estaColapsado ? <i className="bi bi-bookmark-fill me-2"></i> : null}
-                <strong>Marcas</strong>
-              </Nav.Link>
-
-              <Nav.Link
-                onClick={() => navegarA("/productos")}
-                className={estaColapsado ? "text-black" : "text-white"}
-              >
-                {estaColapsado ? <i className="bi bi-box-fill me-2"></i> : null}
-                <strong>Productos</strong>
+                {estaColapsado ? <i className="bi-house-door-fill me-2"></i> : null}
+                <strong>Estadísticas</strong>
               </Nav.Link>
 
               <Nav.Link
