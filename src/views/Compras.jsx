@@ -6,6 +6,10 @@ import ModalEliminacionCompras from "../components/compras/ModalEliminacionCompr
 import ModalRegistroCompras from "../components/compras/ModalRegistroCompras";
 import ModalActualizacionCompras from "../components/compras/ModalActualizacionCompras";
 import CuadroBusquedas from "../components/busquedas/CuadroBusquedas";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
 
 const Compras = () => {
   const [listaCompras, setListaCompras] = useState([]);
@@ -25,7 +29,7 @@ const Compras = () => {
   const [productos, setProductos] = useState([]);
   const [nuevaCompra, setNuevaCompra] = useState({
     id_proveedor: "",
-    fecha: new Date(),
+    fecha: new Date("2025-05-28T14:55:00-05:00"), // Hora actual CST
   });
   const [detallesNuevos, setDetallesNuevos] = useState([]);
 
@@ -46,8 +50,12 @@ const Compras = () => {
         throw new Error("Error al cargar las compras");
       }
       const datos = await respuesta.json();
-      setListaCompras(datos);
-      setComprasFiltradas(datos);
+
+      // Ordenar las compras por id_compra de forma ascendente
+      const datosOrdenados = datos.sort((a, b) => a.id_compra - b.id_compra);
+
+      setListaCompras(datosOrdenados);
+      setComprasFiltradas(datosOrdenados);
       setCargando(false);
     } catch (error) {
       setErrorCarga(error.message);
@@ -70,17 +78,23 @@ const Compras = () => {
         throw new Error("Error al cargar los detalles de la compra");
       }
       const datos = await respuesta.json();
-      setDetallesCompra(datos.filter(d => d.id_compra === id_compra));
+      const detallesFiltrados = datos.filter(d => d.id_compra === id_compra);
+      setDetallesCompra(detallesFiltrados);
       setCargandoDetalles(false);
       setMostrarModal(true);
+      return detallesFiltrados;
     } catch (error) {
       setErrorDetalles(error.message);
       setCargandoDetalles(false);
+      console.error("Error al obtener detalles de compra:", error);
+      return [];
     }
   };
 
   const eliminarCompra = async () => {
     if (!compraAEliminar) return;
+
+    console.log("Eliminando compra con ID:", compraAEliminar.id_compra);
 
     try {
       const respuesta = await fetch(`http://localhost:3000/api/eliminarcompra/${compraAEliminar.id_compra}`, {
@@ -88,15 +102,17 @@ const Compras = () => {
       });
 
       if (!respuesta.ok) {
-        throw new Error("Error al eliminar la compra");
+        const errorData = await respuesta.json();
+        throw new Error(errorData.mensaje || "Error al eliminar la compra");
       }
 
       setMostrarModalEliminacion(false);
       await obtenerCompras();
-      establecerPaginaActual(1); // Resetear a la primera página tras eliminar
+      establecerPaginaActual(1);
       setCompraAEliminar(null);
       setErrorCarga(null);
     } catch (error) {
+      console.error("Error en eliminarCompra (frontend):", error);
       setErrorCarga(error.message);
     }
   };
@@ -157,7 +173,7 @@ const Compras = () => {
       }
 
       await obtenerCompras();
-      setNuevaCompra({ id_proveedor: "", fecha: new Date() });
+      setNuevaCompra({ id_proveedor: "", fecha: new Date("2025-05-28T14:55:00-05:00") });
       setDetallesNuevos([]);
       setMostrarModalRegistro(false);
       setErrorCarga(null);
@@ -167,6 +183,7 @@ const Compras = () => {
   };
 
   const abrirModalActualizacion = async (compra) => {
+    console.log("Abriendo modal para compra con ID:", compra.id_compra); // Depuración
     setCargandoDetalles(true);
     try {
       const [compraRes, detallesRes] = await Promise.all([
@@ -193,7 +210,7 @@ const Compras = () => {
       );
 
       setCompraAEditar({
-        id_compra: compra.id_compra,
+        id_compra: compraData.id_compra,
         id_proveedor: compraData.id_proveedor,
         fecha: new Date(compraData.fecha),
         nombre_compania: compra.nombre_compania,
@@ -208,6 +225,11 @@ const Compras = () => {
   };
 
   const actualizarCompra = async (compraActualizada, detalles) => {
+    if (!compraActualizada.id_compra) {
+      setErrorCarga("Error: ID de compra no válido.");
+      return;
+    }
+
     if (!compraActualizada.id_proveedor || !detalles.length) {
       setErrorCarga("Por favor, selecciona un proveedor y agrega al menos un detalle.");
       return;
@@ -241,29 +263,170 @@ const Compras = () => {
       setDetallesEditados([]);
       setErrorCarga(null);
     } catch (error) {
+      console.error("Error al actualizar compra:", error);
       setErrorCarga(error.message);
     }
   };
 
-  // Lógica de búsqueda
   const manejarCambioBusqueda = (e) => {
     const texto = e.target.value.toLowerCase();
     setTextoBusqueda(texto);
     establecerPaginaActual(1);
 
-    const filtrados = listaCompras.filter(compra =>
-      compra.nombre_compania.toLowerCase().includes(texto)
-    );
+    const filtrados = listaCompras
+      .filter(compra => compra.nombre_compania.toLowerCase().includes(texto))
+      .sort((a, b) => a.id_compra - b.id_compra);
+
     setComprasFiltradas(filtrados);
   };
 
-  // Lógica de paginación
   const comprasPaginadas = Array.isArray(comprasFiltradas)
     ? comprasFiltradas.slice(
         (paginaActual - 1) * elementosPorPagina,
         paginaActual * elementosPorPagina
       )
     : [];
+
+  const generarPDFCompras = () => {
+    const doc = new jsPDF();
+    const anchoPagina = doc.internal.pageSize.getWidth();
+
+    doc.setFillColor(28, 41, 51);
+    doc.rect(0, 0, anchoPagina, 30, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(22);
+    doc.text("Reporte General de Compras", anchoPagina / 2, 18, { align: "center" });
+
+    const columnas = ["ID Compra", "Fecha", "Proveedor", "Total ($)"];
+
+    const filas = comprasFiltradas.map((compra) => [
+      compra.id_compra,
+      new Date(compra.fecha).toLocaleDateString(),
+      compra.nombre_compania,
+      compra.total_venta.toFixed(2),
+    ]);
+
+    const totalPaginasPlaceholder = "{total_pages_count_string}";
+
+    autoTable(doc, {
+      head: [columnas],
+      body: filas,
+      startY: 40,
+      theme: "grid",
+      styles: { fontSize: 9, cellPadding: 2, overflow: 'linebreak' },
+      margin: { top: 20, left: 14, right: 14 },
+      tableWidth: "auto",
+      columnStyles: {
+        0: { cellWidth: 'auto' },
+        1: { cellWidth: 'auto' },
+        2: { cellWidth: 'auto' },
+        3: { cellWidth: 'auto' },
+      },
+      pageBreak: "auto",
+      rowPageBreak: "auto",
+      didDrawPage: function (data) {
+        const alturaPagina = doc.internal.pageSize.getHeight();
+        const anchoPagina = doc.internal.pageSize.getWidth();
+        const numeroPagina = doc.internal.getNumberOfPages();
+
+        doc.setFontSize(10);
+        doc.setTextColor(0, 0, 0);
+        const piePaginaTexto = `Página ${numeroPagina} de ${totalPaginasPlaceholder}`;
+        doc.text(piePaginaTexto, anchoPagina / 2, alturaPagina - 10, { align: "center" });
+      },
+    });
+
+    if (typeof doc.putTotalPages === 'function') {
+      doc.putTotalPages(totalPaginasPlaceholder);
+    }
+
+    const fecha = new Date("2025-05-28T14:55:00-05:00");
+    const dia = String(fecha.getDate()).padStart(2, '0');
+    const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+    const anio = fecha.getFullYear();
+    const nombreArchivo = `ReporteGeneralCompras_${dia}${mes}${anio}.pdf`;
+
+    doc.save(nombreArchivo);
+  };
+
+  const generarPDFDetalleCompra = async (compra) => {
+    const detalles = await obtenerDetalles(compra.id_compra);
+    if (!detalles || detalles.length === 0) {
+      alert("No se encontraron detalles para esta compra.");
+      return;
+    }
+
+    const pdf = new jsPDF();
+    const anchoPagina = pdf.internal.pageSize.getWidth();
+
+    pdf.setFillColor(28, 41, 51);
+    pdf.rect(0, 0, 220, 30, 'F');
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFontSize(22);
+    pdf.text("Detalle de Compra", anchoPagina / 2, 18, { align: "center" });
+
+    let posicionY = 50;
+
+    pdf.setTextColor(0, 0, 0);
+    pdf.setFontSize(12);
+
+    pdf.text(`ID Compra: ${compra.id_compra}`, 14, posicionY);
+    pdf.text(`Fecha: ${new Date(compra.fecha).toLocaleDateString()}`, 14, posicionY + 10);
+    pdf.text(`Proveedor: ${compra.nombre_compania}`, 14, posicionY + 20);
+    pdf.text(`Total Compra: $${compra.total_venta.toFixed(2)}`, 14, posicionY + 30);
+
+    posicionY += 50;
+
+    const columnasDetalles = ["Producto", "Cantidad", "Precio Unitario ($)", "Subtotal ($)"];
+    const filasDetalles = detalles.map(d => [
+      d.nombre_producto,
+      d.cantidad,
+      d.precio_compras.toFixed(2),
+      (d.cantidad * d.precio_compras).toFixed(2)
+    ]);
+
+    autoTable(pdf, {
+      head: [columnasDetalles],
+      body: filasDetalles,
+      startY: posicionY,
+      theme: "striped",
+      styles: { fontSize: 9, cellPadding: 2, overflow: 'linebreak' },
+      margin: { left: 14, right: 14 },
+      columnStyles: {
+        0: { cellWidth: 'auto' },
+        1: { cellWidth: 'auto' },
+        2: { cellWidth: 'auto' },
+        3: { cellWidth: 'auto' },
+      }
+    });
+
+    pdf.save(`DetalleCompra_${compra.id_compra}.pdf`);
+  };
+
+  const exportarExcelCompras = () => {
+    const datos = comprasFiltradas.map((compra) => ({
+      'ID Compra': compra.id_compra,
+      'Fecha': new Date(compra.fecha).toLocaleDateString(),
+      'Proveedor': compra.nombre_compania,
+      'Total Compra': compra.total_venta,
+    }));
+
+    const hoja = XLSX.utils.json_to_sheet(datos);
+    const libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, hoja, 'Compras');
+
+    const excelBuffer = XLSX.write(libro, { bookType: 'xlsx', type: 'array' });
+
+    const fecha = new Date("2025-05-28T14:55:00-05:00");
+    const dia = String(fecha.getDate()).padStart(2, '0');
+    const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+    const anio = fecha.getFullYear();
+
+    const nombreArchivo = `ReporteGeneralCompras_${dia}${mes}${anio}.xlsx`;
+
+    const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
+    saveAs(blob, nombreArchivo);
+  };
 
   return (
     <Container className="mt-5">
@@ -284,6 +447,26 @@ const Compras = () => {
             manejarCambioBusqueda={manejarCambioBusqueda}
           />
         </Col>
+        <Col lg={3} md={4} sm={4} xs={5}>
+          <Button
+            className="mb-3"
+            onClick={generarPDFCompras}
+            variant="secondary"
+            style={{ width: "100%" }}
+          >
+            Generar Reporte PDF
+          </Button>
+        </Col>
+        <Col lg={3} md={4} sm={4} xs={5}>
+          <Button
+            className="mb-3"
+            onClick={exportarExcelCompras}
+            variant="success"
+            style={{ width: "100%" }}
+          >
+            Generar Excel
+          </Button>
+        </Col>
       </Row>
       <br />
 
@@ -298,6 +481,7 @@ const Compras = () => {
         obtenerDetalles={obtenerDetalles}
         abrirModalEliminacion={abrirModalEliminacion}
         abrirModalActualizacion={abrirModalActualizacion}
+        generarPDFDetalleCompra={generarPDFDetalleCompra}
       />
 
       <ModalDetallesCompras
@@ -342,4 +526,4 @@ const Compras = () => {
   );
 };
 
-export default Compras;
+export default Compras; 
