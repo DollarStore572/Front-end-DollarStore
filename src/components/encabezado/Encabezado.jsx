@@ -131,6 +131,14 @@ const Encabezado = () => {
     <strong>Gestión Marcas</strong>
   </NavDropdown.Item>
 
+  <NavDropdown.Item
+    onClick={() => navegarA("/catalogo")}
+    className="text-black"
+  >
+    {estaColapsado ? <i className="bi-images me-2"></i> : null}
+    <strong>Gestión Catalogo</strong>
+  </NavDropdown.Item>
+
 </NavDropdown>
 
 

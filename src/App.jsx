@@ -13,6 +13,8 @@ import Proveedores from "./views/Proveedores";
 import Marcas from "./views/Marcas";
 import Compras from "./views/Compras";
 import Estadisticas from "./views/Estadisticas";
+import Catalogo from "./views/CatalogoProductos";
+
 
 
 const App = () => {
@@ -20,7 +22,7 @@ const App = () => {
     <Router>
       <main className="margen-superior-main">
       <Encabezado />
-       <Routes>
+      <Routes>
           <Route path="/" element={<Login />} />
           <Route path="/inicio" element={<Inicio />} />
           <Route path="/clientes" element={<Clientes />} />
@@ -32,6 +34,7 @@ const App = () => {
           <Route path="/marcas" element={<Marcas />} />
           <Route path="/compras" element={<Compras />} />
           <Route path="/estadisticas" element={<Estadisticas />} />
+          <Route path="/catalogo" element={<Catalogo />} />
       </Routes>
       </main>
     </Router>
