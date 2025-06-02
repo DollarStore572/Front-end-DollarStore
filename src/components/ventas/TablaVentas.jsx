@@ -13,7 +13,8 @@ const TablaVentas = ({
   establecerPaginaActual,
   obtenerDetalles,
   abrirModalEliminacion,
-  abrirModalActualizacion
+  abrirModalActualizacion,
+  generarPDFDetalleVentas
 }) => {
   if (cargando) {
     return <div>Cargando ventas...</div>;
@@ -51,6 +52,16 @@ const TablaVentas = ({
               >
                 <i className="bi bi-list-ul"></i>
               </Button>
+
+              <Button
+                  variant="outline-info" // Color distinto para el botón de PDF de detalle
+                  size="sm"
+                  className="me-2"
+                  onClick={() => generarPDFDetalleVentas(venta)}
+                >
+                  <i className="bi bi-filetype-pdf"></i> {/* Icono de PDF */}
+                </Button>
+
               <Button
                 variant="outline-warning"
                 size="sm"

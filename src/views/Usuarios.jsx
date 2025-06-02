@@ -323,7 +323,7 @@ const Usuarios = () => {
             <Button
               className="mb-3"
               onClick={generarPDFUsuarios}
-              variant="secondary"
+              variant="danger"
               style={{ width: "100%" }}
             >
               Generar Reporte PDF

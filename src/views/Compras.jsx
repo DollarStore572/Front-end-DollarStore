@@ -451,7 +451,7 @@ const Compras = () => {
           <Button
             className="mb-3"
             onClick={generarPDFCompras}
-            variant="secondary"
+            variant="danger"
             style={{ width: "100%" }}
           >
             Generar Reporte PDF

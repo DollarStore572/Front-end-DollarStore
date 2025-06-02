@@ -332,7 +332,7 @@ const Proveedores = () => {
           <Button
             className="mb-3"
             onClick={generarPDFProveedores}
-            variant="secondary"
+            variant="danger"
             style={{ width: "100%" }}
           >
             Generar Reporte PDF
