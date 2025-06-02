@@ -35,6 +35,7 @@ const TablaProductos = ({
             <th>Categoría</th>
             <th>Marca</th>
             <th>Calificación</th>
+            <th>imagen</th>
             <th>Acciones</th>
           </tr>
         </thead>
@@ -49,6 +50,17 @@ const TablaProductos = ({
               <td>{producto.nombre_categoria || producto.id_categoria}</td>
               <td>{producto.nombre_marca || producto.id_marca}</td>
               <td>{producto.calificacion || '-'}</td>
+              <td>
+            {producto.imagen ? (
+              <img
+                src={`data:image/png;base64,${producto.imagen}`}
+                alt={producto.nombre_producto}
+                style={{ maxWidth: '100px' }}
+              />
+            ) : (
+              'Sin imagen'
+            )}
+          </td>
               <td>
                 <Button
                   variant="outline-warning"

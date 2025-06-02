@@ -19,6 +19,7 @@ const Productos = () => {
     id_categoria: '',
     id_marca: '',
     calificacion: '',
+    imagen: ''
   });
 
   const [productosFiltrados, setProductosFiltrados] = useState([]);
@@ -100,7 +101,8 @@ const Productos = () => {
 
   // Agregar un nuevo producto
   const agregarProducto = async () => {
-    if (!nuevoProducto.nombre_producto || !nuevoProducto.precio_unitario || !nuevoProducto.existencia || !nuevoProducto.id_categoria || !nuevoProducto.id_marca) {
+    if (!nuevoProducto.nombre_producto || !nuevoProducto.precio_unitario || !nuevoProducto.existencia || !nuevoProducto.id_categoria 
+      || !nuevoProducto.id_marca) {
       setErrorCarga("Por favor, completa todos los campos requeridos.");
       return;
     }
@@ -128,6 +130,7 @@ const Productos = () => {
         id_categoria: '',
         id_marca: '',
         calificacion: '',
+        imagen: ''
       });
       setMostrarModal(false);
       setErrorCarga(null);
