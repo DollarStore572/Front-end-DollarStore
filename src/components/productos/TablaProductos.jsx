@@ -14,6 +14,7 @@ const TablaProductos = ({
   establecerPaginaActual,
   abrirModalEliminacion,
   abrirModalEdicion,
+  generarPDFDetalleProducto,
 }) => {
   if (cargando) {
     return <div>Cargando productos...</div>;
@@ -76,6 +77,15 @@ const TablaProductos = ({
                   onClick={() => abrirModalEliminacion(producto)}
                 >
                   <i className="bi bi-trash"></i>
+                </Button>
+                <h>            </h>
+                      <Button
+                variant='outline-info'
+                size="sm"
+                className="me-2"
+                onClick={() => generarPDFDetalleProducto(producto)}>
+
+                <i className="bi bi-filetype-pdf"></i>
                 </Button>
               </td>
             </tr>

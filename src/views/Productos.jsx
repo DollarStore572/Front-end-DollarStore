@@ -5,6 +5,11 @@ import ModalEliminacionProductos from '../components/productos/ModalEliminacionP
 import ModalEdicionProductos from '../components/productos/ModalEdicionProductos';
 import { Container, Button, Row, Col } from "react-bootstrap";
 import CuadroBusquedas from '../components/busquedas/CuadroBusquedas';
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import * as XLSX from "xlsx";
+import {saveAs} from 'file-saver';
+
 
 const Productos = () => {
   const [listaProductos, setListaProductos] = useState([]);
@@ -248,6 +253,137 @@ const Productos = () => {
     setMostrarModalEdicion(true);
   };
 
+ const generarPDFProductos = () => {
+    const doc = new jsPDF();
+    const anchoPagina = doc.internal.pageSize.getWidth();
+
+    doc.setFillColor(28, 41, 51);
+    doc.rect(0,0,anchoPagina,30,'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(22);
+    doc.text("Lista de productos", anchoPagina/ 2, 18,{align: "center"});
+    
+    const columnas = ["ID","Nombre", "Descripcion", "Precio","Existencia" ,"Categoria", "Marca", "Calificacion" ];
+
+
+const filas = productosFiltrados.map((producto)=>[
+  producto.id_producto,
+  producto.nombre_producto,
+  producto.descripcion,
+  `C$ ${producto.precio_unitario}`,
+   producto.existencia,
+  producto.id_categoria,
+  producto.id_marca,
+  producto.calificacion
+]);
+const totalPaginas = "{total_pages_count_string}";
+
+autoTable(doc,{
+  head: [columnas],
+  body: filas,
+  startY: 40,
+  theme: "grid",
+  styles: { fontSize: 10, cellPadding: 2},
+  margin:{top: 20, left: 14, right: 14},
+  tableLineWidth: "auto",
+  columnStyles: {
+    0: {cellWidth: 'auto'},
+    1: {cellWidth: 'auto'},
+    2: {cellWidth: 'auto'},
+  },
+  pageBreak: "auto",
+  rowPageBreak: "auto",
+
+  didDrawPage: function(data){
+    const alturaPagina = doc.internal.pageSize.getHeight();
+    const anchoPagina = doc.internal.pageSize.getWidth();
+    const numeroPagina = doc.internal.getNumberOfPages();
+
+    doc.setFontSize(10);
+    doc.setTextColor(0, 0, 0);
+    const piePagina = `Pagina ${numeroPagina} de ${totalPaginas}`;
+    doc.text(piePagina, anchoPagina / 2 + 15, alturaPagina - 10, {align: "center"});
+  },
+});
+if (typeof doc.putTotalPages === 'function'){
+  doc.putTotalPages(totalPaginas);
+}
+
+const fecha = new Date();
+const dia = String(fecha.getDate()).padStart(2, '0');
+const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+const anio = fecha.getFullYear();
+const nombreArchivo = `productos_${dia}${mes}${anio}.pdf`
+doc.save(nombreArchivo);
+
+  }
+
+  const generaPDFDetalleProducto = (producto) =>{
+    const pdf = new jsPDF();
+    const anchoPagina = pdf.internal.pageSize.getWidth();
+
+    //Encabezado 
+    pdf.setFillColor(28, 41, 51);
+    pdf.rect(0, 0, 220, 30, 'F');
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFontSize(22);
+    pdf.text(producto.nombre_producto, anchoPagina/ 2, 18, {align: "center"});
+
+    let posicionY = 50;
+
+    if(producto.imagen){
+      const propiedadesImagen = pdf.getImageProperties(producto.imagen);
+      const anchoImagen = 108;
+      const altoImagen = (propiedadesImagen.height*anchoImagen)/propiedadesImagen.width;
+      const posicionX = (anchoPagina - anchoImagen)/ 2;
+
+      pdf.addImage(producto.imagen, 'JPEG', posicionX, 40, anchoImagen, altoImagen);
+      posicionY = 40 + altoImagen + 10;
+    }
+
+    pdf.setTextColor(0,0,0);
+    pdf.setFontSize(14);
+
+    pdf.text(`Descripcion: ${producto.descripcion}`, anchoPagina/2, posicionY,{align:"center"});
+    pdf.text(`categoria: ${producto.id_categoria}`, anchoPagina/2, posicionY +10,{align: "center"});
+    pdf.text(`Precio: C$ ${producto.precio_unitario}`,anchoPagina/2, posicionY + 38,{align: "center"});
+    pdf.text(`Existencia: ${producto.existencia}`, anchoPagina / 2, posicionY + 20,{align: "center"});
+    pdf.text(`Existencia: ${producto.existencia}`, anchoPagina / 2, posicionY + 20,{align: "center"});
+    pdf.text(`Existencia: ${producto.existencia}`, anchoPagina / 2, posicionY + 20,{align: "center"});
+
+    pdf.save(`${producto.nombre_producto}.pdf`);
+  }
+
+  //reportes de xlsx
+
+const exportarExcelProducto = () =>{
+  const datos = productosFiltrados.map((producto)=>({
+ID: producto.id_producto,
+Nombre: producto.nombre_producto,
+Descripcion: producto.descripcion,
+id_categoria: producto.id_categoria,
+Precio: parseFloat(producto.precio_unitario),
+Existencia: producto.existencia
+  }));
+
+  const hoja = XLSX.utils.json_to_sheet(datos);
+  const libro = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(libro, hoja, 'Productos');
+
+  const excelBuffer = XLSX.write(libro,{ bookType: 'xlsx', type: 'array'});
+
+
+  const fecha = new Date();
+  const dia = String(fecha.getDate()).padStart(2,'0');
+  const mes = String(fecha.getMonth()+1).padStart(2, '0');
+  const anio = fecha.getFullYear();
+
+  const nombreArchivo= `Productos_${dia}${mes}${anio}.xlsx`;
+
+  const blob = new Blob([excelBuffer],{type: 'aplication/octet-stream'});
+  saveAs(blob, nombreArchivo);
+}
+
   return (
     <Container className="mt-5">
       <br />
@@ -255,9 +391,11 @@ const Productos = () => {
 
       <Row>
         <Col lg={2} md={4} sm={4} xs={5}>
-          <Button variant="primary" onClick={() => setMostrarModal(true)} style={{ width: "100%" }}>
-            Nuevo Producto
-          </Button>
+         <Button variant="primary" onClick={() => setMostrarModal(true)} style={{ width: "100%" }}>
+           Nuevo Producto
+           </Button>
+         
+
         </Col>
         <Col lg={6} md={8} sm={8} xs={7}>
           <CuadroBusquedas
@@ -265,6 +403,26 @@ const Productos = () => {
             manejarCambioBusqueda={manejarCambioBusqueda}
           />
         </Col>
+         <Col lg={3} md={4} sm={4} xs={5}>
+    <Button 
+          className="mb-3"
+          onClick={generarPDFProductos}
+          variant="danger"
+          style={{width: "100%" }}
+          >
+            Generar reporte PDF
+          </Button>
+          </Col>
+          <Col lg={3} md={4} sm={4} xs={5}>
+          <Button
+          className="mb-3"
+          onClick={exportarExcelProducto}
+          variant="success"
+          style={{width: "100%"}}
+          >Generar Excel
+          </Button>
+    </Col>
+        
       </Row>
       <br />
 
@@ -278,6 +436,7 @@ const Productos = () => {
         establecerPaginaActual={establecerPaginaActual}
         abrirModalEliminacion={abrirModalEliminacion}
         abrirModalEdicion={abrirModalEdicion}
+        generarPDFDetalleProducto={generaPDFDetalleProducto}
       />
 
       <ModalRegistroProductos
