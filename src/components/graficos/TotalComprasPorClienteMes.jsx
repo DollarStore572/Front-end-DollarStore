@@ -1,26 +1,43 @@
-import { Card } from 'react-bootstrap';
-import { Bar } from 'react-chartjs-2';
+import React, { useRef } from 'react';
+import { Card, Button } from 'react-bootstrap';
+import { Pie } from 'react-chartjs-2';
 import Chart from 'chart.js/auto';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
-const TotalComprasPorClienteMes = ({ etiquetas, totales_por_cliente_mes }) => {
+const TotalComprasPorCliente = ({ etiquetas, totales_por_cliente }) => {
+  const chartRef = useRef(null);
+
+  // Generar colores apagados (ni pastel ni vibrantes)
+  const backgroundColors = etiquetas.map((_, index) => {
+    const colors = [
+      'rgba(200, 60, 80, 0.7)',   // Rojo apagado
+      'rgba(70, 130, 180, 0.7)',  // Azul acero
+      'rgba(60, 150, 60, 0.7)',   // Verde oscuro
+      'rgba(130, 90, 170, 0.7)',  // Morado suave
+      'rgba(200, 120, 50, 0.7)',  // Naranja apagado
+      'rgba(180, 160, 50, 0.7)',  // Amarillo mostaza
+      'rgba(160, 160, 160, 0.7)', // Gris medio
+      'rgba(190, 70, 60, 0.7)',   // Terracota
+      'rgba(100, 120, 140, 0.7)', // Azul grisáceo
+      'rgba(80, 160, 140, 0.7)',  // Verde azulado
+    ];
+    return colors[index % colors.length];
+  });
+
+  const borderColors = backgroundColors.map(color => color.replace('0.7', '1'));
+
   // Asegurar que los datos sean válidos
-  const validData = totales_por_cliente_mes.map(value => (value != null ? value : 0));
-  const maxLabels = 10;
-  const sortedData = etiquetas
-    .map((label, index) => ({ label, value: validData[index] }))
-    .sort((a, b) => b.value - a.value)
-    .slice(0, maxLabels);
-
-  const maxValue = Math.max(...validData, 0) * 1.2; // Margen del 20%
+  const validData = totales_por_cliente.map(value => (value != null ? value : 0));
 
   const data = {
-    labels: sortedData.map(item => item.label),
+    labels: etiquetas,
     datasets: [
       {
         label: 'Compras (C$)',
-        data: sortedData.map(item => item.value),
-        backgroundColor: 'rgba(153, 102, 255, 0.2)',
-        borderColor: 'rgba(153, 102, 255, 1)',
+        data: validData,
+        backgroundColor: backgroundColors,
+        borderColor: borderColors,
         borderWidth: 1,
       },
     ],
@@ -28,46 +45,102 @@ const TotalComprasPorClienteMes = ({ etiquetas, totales_por_cliente_mes }) => {
 
   const options = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: {
-        position: 'top',
+        position: 'right',
+        labels: {
+          font: {
+            size: 12,
+          },
+          color: '#555',
+        },
       },
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-        title: {
-          display: true,
-          text: 'Córdobas (C$)',
+      title: {
+        display: true,
+        text: 'Total de Compras por Cliente (Top 10)',
+        font: {
+          size: 16,
+          weight: 'bold',
         },
-        suggestedMax: maxValue > 0 ? maxValue : 15000, // Ajuste dinámico
-      },
-      x: {
-        title: {
-          display: true,
-          text: 'Cliente y Mes (Top 10)',
-        },
-        ticks: {
-          autoSkip: true,
-          maxRotation: 45,
-          minRotation: 45,
-          padding: 10,
-          maxTicksLimit: maxLabels,
-        },
+        color: '#2c3e50',
       },
     },
   };
 
+  // Si no hay datos, mostrar un mensaje
+  if (!etiquetas.length || !totales_por_cliente.length) {
+    return (
+      <Card style={{ boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)' }}>
+        <Card.Body>
+          <Card.Title style={{ textAlign: 'center', color: '#2c3e50' }}>
+            Total de Compras por Cliente
+          </Card.Title>
+          <div>No hay datos disponibles.</div>
+        </Card.Body>
+      </Card>
+    );
+  }
+
+  const generatePDF = () => {
+    try {
+      const doc = new jsPDF();
+
+      // Encabezado
+      doc.setFillColor(0, 51, 102);
+      doc.rect(0, 0, 210, 40, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(28);
+      doc.text('Reporte de Compras por Cliente', 105, 25, null, null, 'center');
+
+      // Agregar imagen del gráfico
+      if (chartRef.current) {
+        const canvas = chartRef.current.canvas;
+        const imgData = canvas.toDataURL('image/png');
+        doc.addImage(imgData, 'PNG', 10, 50, 190, 100);
+      } else {
+        console.log('No chart reference available.');
+      }
+
+      // Agregar tabla
+      const tableData = etiquetas.map((etiqueta, index) => [
+        etiqueta || 'N/A',
+        validData[index] || '0',
+      ]);
+      autoTable(doc, {
+        head: [['Cliente', 'Total Compras (C$)']],
+        body: tableData,
+        startY: 160,
+        theme: 'grid',
+        styles: { fontSize: 10, cellPadding: 2 },
+        headStyles: { fillColor: [0, 51, 102], textColor: [255, 255, 255] },
+        margin: { top: 50 },
+      });
+
+      const fecha = new Date().toISOString().slice(0, 10);
+      doc.save(`ComprasPorCliente_${fecha}.pdf`);
+      console.log('PDF generado y descargado.');
+    } catch (error) {
+      console.error('Error al generar el PDF:', error);
+      alert('Error al generar el PDF: ' + error.message);
+    }
+  };
+
   return (
-    <Card style={{ height: '100%' }}>
+    <Card style={{ boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)', height: '100%' }}>
       <Card.Body>
-        <Card.Title>Total de Compras por Cliente y Mes</Card.Title>
-        <div style={{ height: '100%', position: 'relative' }}>
-          <Bar data={data} options={options} />
+        <Card.Title style={{ textAlign: 'center', marginBottom: '10px', color: '#2c3e50' }}>
+          Total de Compras por Cliente
+        </Card.Title>
+        <div style={{ width: '100%', height: '300px', position: 'relative' }}>
+          <Pie ref={chartRef} data={data} options={options} />
         </div>
+        <Button variant="primary" onClick={generatePDF} className="mt-3">
+          Generar Reporte PDF
+        </Button>
       </Card.Body>
     </Card>
   );
 };
 
-export default TotalComprasPorClienteMes;
+export default TotalComprasPorCliente;
