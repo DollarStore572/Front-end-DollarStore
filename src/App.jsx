@@ -14,7 +14,7 @@ import Marcas from "./views/Marcas";
 import Compras from "./views/Compras";
 import Estadisticas from "./views/Estadisticas";
 import Catalogo from "./views/CatalogoProductos";
-
+import Dashboard from "./views/Dashboard";
 
 
 const App = () => {
@@ -35,6 +35,7 @@ const App = () => {
           <Route path="/compras" element={<Compras />} />
           <Route path="/estadisticas" element={<Estadisticas />} />
           <Route path="/catalogo" element={<Catalogo />} />
+          <Route path="/dashboard" element={<Dashboard />} />
       </Routes>
       </main>
     </Router>
