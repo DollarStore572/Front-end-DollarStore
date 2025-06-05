@@ -1,8 +1,7 @@
 import React from 'react';
-import { Table } from 'react-bootstrap';
+import { Table, Button } from 'react-bootstrap';
 import Paginacion from '../ordenamiento/Paginacion';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { Button } from "react-bootstrap";
 
 const TablaProductos = ({
   productos,
@@ -14,7 +13,7 @@ const TablaProductos = ({
   establecerPaginaActual,
   abrirModalEliminacion,
   abrirModalEdicion,
-  generarPDFDetalleProducto,
+  generarPDFDetalleProducto
 }) => {
   if (cargando) {
     return <div>Cargando productos...</div>;
@@ -36,7 +35,7 @@ const TablaProductos = ({
             <th>Categoría</th>
             <th>Marca</th>
             <th>Calificación</th>
-            <th>imagen</th>
+            <th>Imagen</th>
             <th>Acciones</th>
           </tr>
         </thead>
@@ -50,19 +49,27 @@ const TablaProductos = ({
               <td>{producto.existencia}</td>
               <td>{producto.nombre_categoria || producto.id_categoria}</td>
               <td>{producto.nombre_marca || producto.id_marca}</td>
-              <td>{producto.calificacion || '-'}</td>
+              <td>{producto.calificacion ? '★'.repeat(Number(producto.calificacion)) : '-'}</td>
               <td>
-            {producto.imagen ? (
-              <img
-                src={`data:image/png;base64,${producto.imagen}`}
-                alt={producto.nombre_producto}
-                style={{ maxWidth: '100px' }}
-              />
-            ) : (
-              'Sin imagen'
-            )}
-          </td>
+                {producto.imagen ? (
+                  <img
+                    src={`data:image/png;base64,${producto.imagen}`}
+                    alt={producto.nombre_producto}
+                    style={{ maxWidth: '100px' }}
+                  />
+                ) : (
+                  'Sin imagen'
+                )}
+              </td>
               <td>
+                <Button
+                  variant="outline-secondary"
+                  size="sm"
+                  className="me-2"
+                  onClick={() => generarPDFDetalleProducto(producto)}
+                >
+                  <i className="bi bi-filetype-pdf"></i>
+                </Button>
                 <Button
                   variant="outline-warning"
                   size="sm"
@@ -78,21 +85,11 @@ const TablaProductos = ({
                 >
                   <i className="bi bi-trash"></i>
                 </Button>
-                <h>            </h>
-                      <Button
-                variant='outline-info'
-                size="sm"
-                className="me-2"
-                onClick={() => generarPDFDetalleProducto(producto)}>
-
-                <i className="bi bi-filetype-pdf"></i>
-                </Button>
               </td>
             </tr>
           ))}
         </tbody>
       </Table>
-
       <Paginacion
         elementosPorPagina={elementosPorPagina}
         totalElementos={totalElementos}

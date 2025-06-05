@@ -8,9 +8,57 @@ const ModalEdicionProductos = ({
   manejarCambioInputEdicion,
   actualizarProducto,
   errorCarga,
-  categorias, // Lista de categorías para el select
-  marcas,     // Lista de marcas para el select
+  categorias,
+  marcas,
 }) => {
+  console.log("Cargando ModalEdicionProductos.jsx sin validación de calificación");
+
+  const validarletras = (e) => {
+    const charCode = e.which ? e.which : e.keyCode;
+    if (
+      (charCode < 65 || charCode > 90) &&
+      (charCode < 97 || charCode > 122) &&
+      charCode !== 46 &&
+      charCode !== 8
+    ) {
+      e.preventDefault();
+    }
+  };
+
+  const validarnumeros = (e) => {
+    const charCode = e.which ? e.which : e.keyCode;
+    if (
+      (charCode < 48 || charCode > 57) &&
+      charCode !== 8 &&
+      charCode !== 46
+    ) {
+      e.preventDefault();
+    }
+  };
+
+  const validarPrecio = (e) => {
+    const charCode = e.which ? e.which : e.keyCode;
+    const inputValue = e.target.value;
+    if (
+      (charCode < 48 || charCode > 57) &&
+      charCode !== 46 &&
+      charCode !== 8 &&
+      charCode !== 9
+    ) {
+      e.preventDefault();
+    }
+    if (charCode === 46 && inputValue.includes(".")) {
+      e.preventDefault();
+    }
+  };
+
+  const validarFormulario = () => {
+    return (
+      (productoEditado?.nombre_producto || "").trim() !== "" &&
+      (productoEditado?.descripcion || "").trim() !== "" 
+    );
+  };
+
   return (
     <Modal show={mostrarModalEdicion} onHide={() => setMostrarModalEdicion(false)}>
       <Modal.Header closeButton>
@@ -25,6 +73,7 @@ const ModalEdicionProductos = ({
               name="nombre_producto"
               value={productoEditado?.nombre_producto || ""}
               onChange={manejarCambioInputEdicion}
+              onKeyDown={validarletras}
               placeholder="Ingresa el nombre del producto (máx. 100 caracteres)"
               maxLength={100}
               required
@@ -38,6 +87,7 @@ const ModalEdicionProductos = ({
               rows={3}
               name="descripcion"
               value={productoEditado?.descripcion || ""}
+              onKeyDown={validarletras}
               onChange={manejarCambioInputEdicion}
               placeholder="Ingresa la descripción (máx. 250 caracteres)"
               maxLength={250}
@@ -64,6 +114,7 @@ const ModalEdicionProductos = ({
               type="number"
               name="existencia"
               value={productoEditado?.existencia || ""}
+              onKeyDown={validarnumeros}
               onChange={manejarCambioInputEdicion}
               placeholder="Ingresa la cantidad en existencia"
               min="0"
@@ -106,19 +157,20 @@ const ModalEdicionProductos = ({
           </Form.Group>
 
           <Form.Group className="mb-3" controlId="formCalificacion">
-            <Form.Label>Calificación (0-5)</Form.Label>
-            <Form.Control
-              type="number"
+            <Form.Label>Calificación (1-5, opcional)</Form.Label>
+            <Form.Select
               name="calificacion"
-              value={productoEditado?.calificacion || ""}
+              value={productoEditado?.calificacion?.toString() ?? ""}
               onChange={manejarCambioInputEdicion}
-              placeholder="Ingresa la calificación (0-5)"
-              min="0"
-              max="5"
-              step="1"
-            />
+            >
+              <option value="">Sin calificación</option>
+              {[1, 2, 3, 4, 5].map((valor) => (
+                <option key={valor} value={valor}>
+                  {valor} {'★'.repeat(valor)}
+                </option>
+              ))}
+            </Form.Select>
           </Form.Group>
-
 
           <Form.Group className="mb-3" controlId="formImagenProducto">
             <Form.Label>Imagen</Form.Label>
@@ -159,7 +211,7 @@ const ModalEdicionProductos = ({
         <Button variant="secondary" onClick={() => setMostrarModalEdicion(false)}>
           Cancelar
         </Button>
-        <Button variant="primary" onClick={actualizarProducto}>
+        <Button variant="primary" onClick={actualizarProducto} disabled={!validarFormulario()}>
           Guardar Cambios
         </Button>
       </Modal.Footer>

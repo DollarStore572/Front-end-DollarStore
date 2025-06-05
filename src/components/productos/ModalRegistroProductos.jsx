@@ -8,9 +8,63 @@ const ModalRegistroProductos = ({
   manejarCambioInput,
   agregarProducto,
   errorCarga,
-  categorias, // Lista de categorías para el select
-  marcas,     // Lista de marcas para el select
+  categorias,
+  marcas,
 }) => {
+  console.log("Cargando ModalRegistroProductos.jsx sin validación de calificación");
+
+  const validarletras = (e) => {
+    const charCode = e.which ? e.which : e.keyCode;
+    if (
+      (charCode < 65 || charCode > 90) &&
+      (charCode < 97 || charCode > 122) &&
+      charCode !== 46 &&
+      charCode !== 8
+    ) {
+      e.preventDefault();
+    }
+  };
+
+  const validarnumeros = (e) => {
+    const charCode = e.which ? e.which : e.keyCode;
+    if (
+      (charCode < 48 || charCode > 57) &&
+      charCode !== 8 &&
+      charCode !== 46
+    ) {
+      e.preventDefault();
+    }
+  };
+
+  const validarPrecio = (e) => {
+    const charCode = e.which ? e.which : e.keyCode;
+    const inputValue = e.target.value;
+    if (
+      (charCode < 48 || charCode > 57) &&
+      charCode !== 46 &&
+      charCode !== 8 &&
+      charCode !== 9
+    ) {
+      e.preventDefault();
+    }
+    if (charCode === 46 && inputValue.includes(".")) {
+      e.preventDefault();
+    }
+  };
+
+  const validarFormulario = () => {
+    return (
+      (nuevoProducto.nombre_producto || "").trim() !== "" &&
+      (nuevoProducto.descripcion || "").trim() !== "" &&
+      (nuevoProducto.existencia || "").trim() !== "" &&
+      (nuevoProducto.precio_unitario || "").trim() !== "" &&
+      nuevoProducto.id_categoria !== undefined &&
+      nuevoProducto.id_categoria !== "" &&
+      nuevoProducto.id_marca !== undefined &&
+      nuevoProducto.id_marca !== ""
+    );
+  };
+
   return (
     <Modal show={mostrarModal} onHide={() => setMostrarModal(false)}>
       <Modal.Header closeButton>
@@ -24,6 +78,7 @@ const ModalRegistroProductos = ({
               type="text"
               name="nombre_producto"
               value={nuevoProducto.nombre_producto || ""}
+              onKeyDown={validarletras}
               onChange={manejarCambioInput}
               placeholder="Ingresa el nombre del producto (máx. 100 caracteres)"
               maxLength={100}
@@ -38,6 +93,7 @@ const ModalRegistroProductos = ({
               rows={3}
               name="descripcion"
               value={nuevoProducto.descripcion || ""}
+              onKeyDown={validarletras}
               onChange={manejarCambioInput}
               placeholder="Ingresa la descripción (máx. 250 caracteres)"
               maxLength={250}
@@ -64,6 +120,7 @@ const ModalRegistroProductos = ({
               type="number"
               name="existencia"
               value={nuevoProducto.existencia || ""}
+              onKeyDown={validarnumeros}
               onChange={manejarCambioInput}
               placeholder="Ingresa la cantidad en existencia"
               min="0"
@@ -106,39 +163,41 @@ const ModalRegistroProductos = ({
           </Form.Group>
 
           <Form.Group className="mb-3" controlId="formCalificacion">
-            <Form.Label>Calificación (0-5)</Form.Label>
-            <Form.Control
-              type="number"
+            <Form.Label>Calificación (1-5, opcional)</Form.Label>
+            <Form.Select
               name="calificacion"
-              value={nuevoProducto.calificacion || ""}
+              value={nuevoProducto.calificacion?.toString() ?? ""}
               onChange={manejarCambioInput}
-              placeholder="Ingresa la calificación (0-5)"
-              min="0"
-              max="5"
-              step="1"
-            />
+            >
+              <option value="">Sin calificación</option>
+              {[1, 2, 3, 4, 5].map((valor) => (
+                <option key={valor} value={valor}>
+                  {valor} {'★'.repeat(valor)}
+                </option>
+              ))}
+            </Form.Select>
           </Form.Group>
 
-            <Form.Group className="mb-3" controlId="formImagenProducto">
-        <Form.Label>Imagen</Form.Label>
-        <Form.Control
-          type="file"
-          name="imagen"
-          accept="image/*"
-          onChange={(e) => {
-            const file = e.target.files[0];
-            if (file) {
-              const reader = new FileReader();
-              reader.onloadend = () => {
-                manejarCambioInput({
-                  target: { name: 'imagen', value: reader.result.split(',')[1] } // Extrae solo la parte Base64
-                });
-              };
-              reader.readAsDataURL(file);
-            }
-          }}
-        />
-      </Form.Group>
+          <Form.Group className="mb-3" controlId="formImagenProducto">
+            <Form.Label>Imagen</Form.Label>
+            <Form.Control
+              type="file"
+              name="imagen"
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files[0];
+                if (file) {
+                  const reader = new FileReader();
+                  reader.onloadend = () => {
+                    manejarCambioInput({
+                      target: { name: 'imagen', value: reader.result.split(',')[1] }
+                    });
+                  };
+                  reader.readAsDataURL(file);
+                }
+              }}
+            />
+          </Form.Group>
 
           {errorCarga && (
             <div className="text-danger mt-2">{errorCarga}</div>
@@ -149,7 +208,7 @@ const ModalRegistroProductos = ({
         <Button variant="secondary" onClick={() => setMostrarModal(false)}>
           Cancelar
         </Button>
-        <Button variant="primary" onClick={agregarProducto}>
+        <Button variant="primary" onClick={agregarProducto} disabled={!validarFormulario()}>
           Guardar
         </Button>
       </Modal.Footer>
