@@ -1,8 +1,7 @@
 import React from 'react';
-import { Table } from 'react-bootstrap';
+import { Table, Button, Card } from 'react-bootstrap';
 import Paginacion from '../ordenamiento/Paginacion';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { Button } from "react-bootstrap";
 
 // Declaración del componente TablaMarcas que recibe props
 const TablaMarcas = ({
@@ -15,7 +14,7 @@ const TablaMarcas = ({
   establecerPaginaActual,
   abrirModalEliminacion,
   abrirModalEdicion,
-  generarPDFDetalleMarca // Nueva prop para generar PDF de detalle
+  generarPDFDetalleMarca
 }) => {
   // Renderizado condicional según el estado recibido por props
   if (cargando) {
@@ -25,22 +24,63 @@ const TablaMarcas = ({
     return <div>Error: {error}</div>;
   }
 
-  // Renderizado de la tabla con los datos recibidos
+  // Renderizado de la tabla y tarjetas con los datos recibidos
   return (
-    <>
-      <Table striped bordered hover responsive>
-        <thead>
-          <tr>
-            <th>ID Marca</th>
-            <th>Nombre</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {marcas.map((marca) => (
-            <tr key={marca.id_marca}><td>{marca.id_marca}</td>
-              <td>{marca.nombre_marca}</td>
-              <td>
+    <div className="d-flex flex-column justify-content-between" style={{ minHeight: "60vh" }}>
+      {/* Vista de tabla para pantallas medianas y grandes */}
+      <div className="d-none d-md-block">
+        <Table striped bordered hover responsive>
+          <thead>
+            <tr>
+              <th>ID Marca</th>
+              <th>Nombre</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {marcas.map((marca) => (
+              <tr key={marca.id_marca}>
+                <td>{marca.id_marca}</td>
+                <td>{marca.nombre_marca}</td>
+                <td>
+                  <Button
+                    variant="outline-warning"
+                    size="sm"
+                    className="me-2"
+                    onClick={() => abrirModalEdicion(marca)}
+                  >
+                    <i className="bi bi-pencil"></i>
+                  </Button>
+                  <Button
+                    variant="outline-info"
+                    size="sm"
+                    className="me-2"
+                    onClick={() => generarPDFDetalleMarca(marca)}
+                  >
+                    <i className="bi bi-filetype-pdf"></i>
+                  </Button>
+                  <Button
+                    variant="outline-danger"
+                    size="sm"
+                    onClick={() => abrirModalEliminacion(marca)}
+                  >
+                    <i className="bi bi-trash"></i>
+                  </Button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
+      </div>
+
+      {/* Vista de tarjetas para pantallas pequeñas */}
+      <div className="d-block d-md-none">
+        {marcas.map((marca) => (
+          <Card key={marca.id_marca} className="mb-2 shadow-sm">
+            <Card.Body>
+              <Card.Title>{marca.nombre_marca}</Card.Title>
+              <Card.Text><strong>ID:</strong> {marca.id_marca}</Card.Text>
+              <div>
                 <Button
                   variant="outline-warning"
                   size="sm"
@@ -49,14 +89,13 @@ const TablaMarcas = ({
                 >
                   <i className="bi bi-pencil"></i>
                 </Button>
-                {/* Botón para generar PDF de detalle por marca */}
                 <Button
-                  variant="outline-info" // Color distinto para el botón de PDF de detalle
+                  variant="outline-info"
                   size="sm"
                   className="me-2"
                   onClick={() => generarPDFDetalleMarca(marca)}
                 >
-                  <i className="bi bi-filetype-pdf"></i> {/* Icono de PDF */}
+                  <i className="bi bi-filetype-pdf"></i>
                 </Button>
                 <Button
                   variant="outline-danger"
@@ -65,18 +104,21 @@ const TablaMarcas = ({
                 >
                   <i className="bi bi-trash"></i>
                 </Button>
-              </td></tr>
-          ))}
-        </tbody>
-      </Table>
+              </div>
+            </Card.Body>
+          </Card>
+        ))}
+      </div>
 
-      <Paginacion
-        elementosPorPagina={elementosPorPagina}
-        totalElementos={totalElementos}
-        paginaActual={paginaActual}
-        establecerPaginaActual={establecerPaginaActual}
-      />
-    </>
+      <div className="mt-auto">
+        <Paginacion
+          elementosPorPagina={elementosPorPagina}
+          totalElementos={totalElementos}
+          paginaActual={paginaActual}
+          establecerPaginaActual={establecerPaginaActual}
+        />
+      </div>
+    </div>
   );
 };
 
