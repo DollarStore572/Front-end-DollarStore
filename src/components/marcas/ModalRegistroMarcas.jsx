@@ -17,6 +17,28 @@ const ModalRegistroMarcas = ({
     setNuevaMarca(prev => ({ ...prev, nombre_marca: e.target.value }));
   };
 
+
+   const validarletras = (e) => {
+    const charCode = e.which ? e.which : e.keyCode;
+
+    // Permitir solo letras [A-Z, a-z]
+    if (
+        (charCode < 65 || charCode > 90) && // Letras mayúsculas
+        (charCode < 97 || charCode > 122) && // Letras minúsculas
+        charCode !== 46 && // Retroceso
+        charCode !== 8 // Borrar
+    ) {
+        e.preventDefault(); // Evita que se escriba el carácter
+    }
+};
+
+
+const validarFormulario = () => {
+    return (
+        (nuevaMarca?.nombre_marca || "").trim() !== "" // Cambié nombreMarca.nombre_marca por nuevaMarca.nombre_marca
+    );
+};
+
   return (
     <Modal
       show={mostrarModal}
@@ -34,6 +56,7 @@ const ModalRegistroMarcas = ({
               type="text"
               value={nombreMarca}
               onChange={manejarCambioNombre}
+              onKeyDown={validarletras}
               placeholder="Ingrese el nombre de la marca"
               required
             />
@@ -48,7 +71,7 @@ const ModalRegistroMarcas = ({
         <Button variant="secondary" onClick={() => setMostrarModal(false)}>
           Cancelar
         </Button>
-        <Button variant="primary" onClick={agregarMarca}>
+        <Button variant="primary" onClick={agregarMarca} disabled={!validarFormulario()}>
           Crear Marca
         </Button>
       </Modal.Footer>
