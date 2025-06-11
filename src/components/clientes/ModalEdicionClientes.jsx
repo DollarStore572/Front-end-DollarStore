@@ -9,6 +9,45 @@ const ModalEdicionClientes = ({
   actualizarCliente,
   errorCarga,
 }) => {
+
+    const validarletras = (e) => {
+    const charCode = e.which ? e.which : e.keyCode;
+
+    // Permitir solo letras [A-Z, a-z]
+    if (
+        (charCode < 65 || charCode > 90) && // Letras mayúsculas
+        (charCode < 97 || charCode > 122) && // Letras minúsculas
+        charCode !== 46 && // Retroceso
+        charCode !== 8 // Borrar
+    ) {
+        e.preventDefault(); // Evita que se escriba el carácter
+    }
+};
+
+
+
+const validarnumeros = (e) => {
+    const charCode = e.which ? e.which : e.keyCode;
+
+    // Permitir solo números [0-9]
+    if (
+        (charCode < 48 || charCode > 57) && // Números
+        charCode !== 8 && // Retroceso
+        charCode !== 46 // Borrar
+    ) {
+        e.preventDefault(); // Evita que se escriba el carácter
+    }
+};
+
+
+const validarFormulario = () => {
+    return (
+        (clienteEditado?.nombre || "").trim() !== "" &&
+        (clienteEditado?.apellido || "").trim() !== "" &&
+        (clienteEditado?.telefono || "").trim() !== "" &&
+        (clienteEditado?.cedula || "").trim() !== ""
+    );
+};
   return (
     <Modal show={mostrarModalEdicion} onHide={() => setMostrarModalEdicion(false)}>
       <Modal.Header closeButton>
@@ -23,6 +62,7 @@ const ModalEdicionClientes = ({
               name="nombre"
               value={clienteEditado?.nombre || ""}
               onChange={manejarCambioInputEdicion}
+               onKeyDown={validarletras}
               placeholder="Ingresa el nombre (máx. 20 caracteres)"
               maxLength={20}
               required
@@ -34,6 +74,7 @@ const ModalEdicionClientes = ({
               type="text"
               name="apellido"
               value={clienteEditado?.apellido || ""}
+               onKeyDown={validarletras}
               onChange={manejarCambioInputEdicion}
               placeholder="Ingresa el apellido (máx. 20 caracteres)"
               maxLength={20}
@@ -46,6 +87,7 @@ const ModalEdicionClientes = ({
               type="text"
               name="telefono"
               value={clienteEditado?.telefono || ""}
+               onKeyDown={validarnumeros}
               onChange={manejarCambioInputEdicion}
               placeholder="Ingresa el teléfono (máx. 12 caracteres)"
               maxLength={12}
@@ -73,7 +115,7 @@ const ModalEdicionClientes = ({
         <Button variant="secondary" onClick={() => setMostrarModalEdicion(false)}>
           Cancelar
         </Button>
-        <Button variant="primary" onClick={actualizarCliente}>
+        <Button variant="primary" onClick={actualizarCliente} disabled={!validarFormulario()}>
           Guardar Cambios
         </Button>
       </Modal.Footer>
