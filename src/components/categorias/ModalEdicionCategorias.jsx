@@ -9,6 +9,29 @@ const ModalEdicionCategorias = ({
   actualizarCategoria,
   errorCarga,
 }) => {
+
+
+   const validarletras = (e) => {
+    const charCode = e.which ? e.which : e.keyCode;
+
+    // Permitir solo letras [A-Z, a-z]
+    if (
+        (charCode < 65 || charCode > 90) && // Letras mayúsculas
+        (charCode < 97 || charCode > 122) && // Letras minúsculas
+        charCode !== 46 && // Retroceso
+        charCode !== 8 // Borrar
+    ) {
+        e.preventDefault(); // Evita que se escriba el carácter
+    }
+};
+
+
+const validarFormulario = () => {
+    return (
+        (categoriaEditada?.nombre_categoria || "").trim() !== "" &&
+        (categoriaEditada?.descripcion || "").trim() !== "" 
+    );
+};
   return (
     <Modal show={mostrarModalEdicion} onHide={() => setMostrarModalEdicion(false)}>
       <Modal.Header closeButton>
@@ -23,6 +46,7 @@ const ModalEdicionCategorias = ({
               name="nombre_categoria"
               value={categoriaEditada?.nombre_categoria || ""}
               onChange={manejarCambioInputEdicion}
+              onKeyDown={validarletras}
               placeholder="Ingresa el nombre de la categoría (máx. 50 caracteres)"
               maxLength={50}
               required
@@ -34,6 +58,7 @@ const ModalEdicionCategorias = ({
               type="text"
               name="descripcion"
               value={categoriaEditada?.descripcion || ""}
+              onKeyDown={validarletras}
               onChange={manejarCambioInputEdicion}
               placeholder="Ingresa una descripción (máx. 200 caracteres)"
               maxLength={200}
@@ -49,7 +74,7 @@ const ModalEdicionCategorias = ({
         <Button variant="secondary" onClick={() => setMostrarModalEdicion(false)}>
           Cancelar
         </Button>
-        <Button variant="primary" onClick={actualizarCategoria}>
+        <Button variant="primary" onClick={actualizarCategoria} disabled={!validarFormulario()}>
           Guardar Cambios
         </Button>
       </Modal.Footer>
@@ -58,3 +83,6 @@ const ModalEdicionCategorias = ({
 };
 
 export default ModalEdicionCategorias;
+
+
+
