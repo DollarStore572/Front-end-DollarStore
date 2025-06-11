@@ -1,32 +1,48 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { Card, Button } from 'react-bootstrap';
 import { Bar } from 'react-chartjs-2';
 import Chart from 'chart.js/auto';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
-const ProductosMasVendidosCantidad = ({ etiquetas, cantidades_por_producto }) => {
+const ProductosBajoStock = ({ etiquetas, ventas_por_mes }) => {
   const chartRef = useRef(null);
 
-  // Asegurar que los datos sean válidos
-  const validData = cantidades_por_producto.map(value => (value != null ? value : 0));
-  const maxLabels = 10;
-  const sortedData = etiquetas
-    .map((label, index) => ({ label, value: validData[index] }))
-    .sort((a, b) => b.value - a.value)
-    .slice(0, maxLabels);
+  useEffect(() => {
+    // Ensure chart types are registered
+    Chart.register();
+  }, []);
 
+  // Asegurar que los datos sean válidos y limitar a 5 registros
+  const validData = ventas_por_mes.map(value => (value != null ? value : 0)).slice(0, 5);
   const maxValue = Math.max(...validData, 0) * 1.2; // Margen del 20%
+  const validEtiquetas = etiquetas.slice(0, 5); // Limitar etiquetas a 5
+
+  console.log('Data for chart:', validData, validEtiquetas); // Debug output
 
   const data = {
-    labels: sortedData.map(item => item.label),
+    labels: validEtiquetas,
     datasets: [
       {
-        label: 'Cantidad Vendida (Unidades)',
-        data: sortedData.map(item => item.value),
-        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-        borderColor: 'rgba(75, 192, 192, 1)',
+        label: 'Stock (Unidades)',
+        data: validData,
+        backgroundColor: 'rgba(255, 99, 132, 0.6)', // Stronger fill color for bars
+        borderColor: 'rgba(255, 99, 132, 1)', // Border for bars
         borderWidth: 1,
+        type: 'bar', // Explicitly set as bar
+        order: 1, // Ensure bars are drawn first
+      },
+      {
+        label: 'Puntos de Stock',
+        data: validData,
+        borderColor: 'rgba(54, 162, 235, 1)', // Line color
+        backgroundColor: 'rgba(54, 162, 235, 0)', // No fill for line
+        pointBackgroundColor: 'rgba(54, 162, 235, 1)', // Point color
+        pointRadius: 5, // Size of points
+        pointHoverRadius: 7,
+        fill: false,
+        type: 'line', // Explicitly set as line
+        order: 2, // Ensure line is drawn over bars
       },
     ],
   };
@@ -43,21 +59,14 @@ const ProductosMasVendidosCantidad = ({ etiquetas, cantidades_por_producto }) =>
         beginAtZero: true,
         title: {
           display: true,
-          text: 'Unidades Vendidas',
+          text: 'Unidades',
         },
         suggestedMax: maxValue > 0 ? maxValue : 100, // Ajuste dinámico
       },
       x: {
         title: {
           display: true,
-          text: 'Producto (Top 10)',
-        },
-        ticks: {
-          autoSkip: true,
-          maxRotation: 45,
-          minRotation: 45,
-          padding: 10,
-          maxTicksLimit: maxLabels,
+          text: 'Productos',
         },
       },
     },
@@ -66,15 +75,15 @@ const ProductosMasVendidosCantidad = ({ etiquetas, cantidades_por_producto }) =>
   const generatePDF = () => {
     try {
       const doc = new jsPDF();
-
-      // Encabezado
+      
+      // Header
       doc.setFillColor(0, 51, 102);
       doc.rect(0, 0, 210, 40, 'F');
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(28);
-      doc.text('Reporte de Productos Más Vendidos', 105, 25, null, null, 'center');
+      doc.text('Reporte de Productos Bajo Stock', 105, 25, null, null, 'center');
 
-      // Agregar imagen del gráfico
+      // Add Chart Image
       if (chartRef.current) {
         const canvas = chartRef.current.canvas;
         const imgData = canvas.toDataURL('image/png');
@@ -83,13 +92,13 @@ const ProductosMasVendidosCantidad = ({ etiquetas, cantidades_por_producto }) =>
         console.log('No chart reference available.');
       }
 
-      // Agregar tabla
-      const tableData = sortedData.map(item => [
-        item.label || 'N/A',
-        item.value || '0',
+      // Add Table
+      const tableData = validEtiquetas.map((etiqueta, index) => [
+        etiqueta || 'N/A',
+        validData[index] || '0',
       ]);
       autoTable(doc, {
-        head: [['Producto', 'Cantidad Vendida (Unidades)']],
+        head: [['Producto', 'Stock (Unidades)']],
         body: tableData,
         startY: 160,
         theme: 'grid',
@@ -99,7 +108,7 @@ const ProductosMasVendidosCantidad = ({ etiquetas, cantidades_por_producto }) =>
       });
 
       const fecha = new Date().toISOString().slice(0, 10);
-      doc.save(`ProductosMasVendidos_${fecha}.pdf`);
+      doc.save(`ProductosBajoStock_${fecha}.pdf`);
       console.log('PDF generado y descargado.');
     } catch (error) {
       console.error('Error al generar el PDF:', error);
@@ -107,32 +116,19 @@ const ProductosMasVendidosCantidad = ({ etiquetas, cantidades_por_producto }) =>
     }
   };
 
-  // Si no hay datos, mostrar un mensaje
-  if (!etiquetas.length || !cantidades_por_producto.length) {
-    return (
-      <Card style={{ height: '100%' }}>
-        <Card.Body>
-          <Card.Title>Productos Más Vendidos por Cantidad</Card.Title>
-          <div>No hay datos disponibles.</div>
-        </Card.Body>
-      </Card>
-    );
-  }
-
   return (
     <Card style={{ height: '100%' }}>
       <Card.Body>
-        <Card.Title>Productos Más Vendidos por Cantidad</Card.Title>
-        <div style={{ height: '100%', position: 'relative' }}>
+        <Card.Title>Productos Bajo Stock</Card.Title>
+        <div style={{ height: '400px', position: 'relative' }}> {/* Increased height for better visibility */}
           <Bar ref={chartRef} data={data} options={options} />
           <Button variant="danger" onClick={generatePDF} className="mt-3">
-          Generar Reporte PDF
-        </Button>
+            Generar Reporte PDF
+          </Button>
         </div>
-     
       </Card.Body>
     </Card>
   );
 };
 
-export default ProductosMasVendidosCantidad;
+export default ProductosBajoStock;

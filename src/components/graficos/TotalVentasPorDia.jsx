@@ -100,7 +100,7 @@ const TotalVentasPorDia = ({ dias, totales_por_dia }) => {
         <Card.Title>Total de Ventas por Día</Card.Title>
         <div style={{ height: '100%', position: 'relative' }}>
           <Bar ref={chartRef} data={data} options={options} />
-          <Button variant="primary" onClick={generatePDF} className="mt-3">
+          <Button variant="danger" onClick={generatePDF} className="mt-3">
           Generar Reporte PDF
         </Button>
 
