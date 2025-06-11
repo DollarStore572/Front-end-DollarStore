@@ -1,6 +1,6 @@
 import { Container, Card } from "react-bootstrap";
 
-const Dashboard1= () => {
+const Dashboard1 = () => {
   return (
     <Container>
       <br />
@@ -13,4 +13,4 @@ const Dashboard1= () => {
   );
 };
 
-export default Dashboard1
+export default Dashboard1;
