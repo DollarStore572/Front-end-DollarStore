@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Container, Card, Button, Row, Col } from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap-icons/font/bootstrap-icons.css";
+import Proposito from "../components/inicio/Proposito";
 
 const Inicio = () => {
   const [nombreUsuario, setNombreUsuario] = useState("");
@@ -81,6 +82,7 @@ const Inicio = () => {
             </Card.Footer>
           </Card>
         </Col>
+        <Proposito />
       </Row>
     </Container>
   );

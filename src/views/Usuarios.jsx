@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import ModalRegistroUsuarios from '../components/usuarios/ModalRegistroUsuarios';
 import ModalEdicionUsuarios from '../components/usuarios/ModalEdicionUsuarios';

@@ -320,7 +320,7 @@ const Categorias = () => {
           <Button
             className="mb-3"
             onClick={generarPDFCategorias}
-            variant="secondary"
+            variant="danger"
             style={{ width: "100%" }}
           >
             Generar Reporte PDF

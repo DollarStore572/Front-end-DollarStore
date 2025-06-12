@@ -430,6 +430,7 @@ const Compras = () => {
 
   return (
     <Container className="mt-5">
+      <br />
       <h4>Compras con Detalles</h4>
       <Row>
         <Col lg={2} md={4} sm={4} xs={5}>
